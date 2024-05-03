@@ -1,0 +1,34 @@
+name: Build LaTeX document
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "*"
+      - "images/*"
+jobs:
+  build_latex:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Set up Git repository
+        uses: actions/checkout@v4
+      - name: Compile LaTeX document
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: main.tex
+      - name: Upload PDF file
+        uses: actions/upload-artifact@v4
+        with:
+          name: BSc_group_k
+          path: main.pdf
+      - run: "mkdir -p build"
+      - run: "mv main.pdf build/BSc_group_k.pdf"
+      - name: Commit changes
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add build/BSc_group_k.pdf
+          git commit -m "Build PDF"
+          git push
