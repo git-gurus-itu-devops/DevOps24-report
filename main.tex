@@ -11,26 +11,36 @@
 
 \maketitle
 
-Exam assignment by:\\\\
-\centering
-\begin{tabular}{c|c}
+\begin{table}[H]
+    \centering
+    \begin{tabular}{c|c}
     Andreas Guldborg Hansen & aguh@itu \\
-    Andreas Severin Hauch Trøstrup & aguh@itu.dk \\
+    Andreas Severin Hauch Trøstrup & atro@itu.dk \\
     Frederik Petersen & frepe@itu.dk \\
     Mads Aqqalu Roager & mroa@itu.dk \\
     Silke Holme Bonnen & ssbo@itu.dk
-\end{tabular}
+    \end{tabular}
+\end{table}
+
+\newpage
+\tableofcontents
 
 \newpage
 
 
-\section{Introduction}
+\section{Systems' perspective}
+\subsection{Design and architecture}
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{images/devops-overview.png}
     \caption{A diagram of the infrastructure running our application}
     \label{fig:infrastructure}
 \end{figure}
+
+\subsection{Dependencies}
+
+\subsection{Interactions of subsystems}
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{images/devops-sequence.png}
@@ -38,7 +48,29 @@ Exam assignment by:\\\\
     \label{fig:sequence}
 \end{figure}
 
-\section{Security}
-There are no security flaws in minitwit
+\subsection{Current state}
+
+\section{Process' perspective}
+
+\subsection{CI/CD chain}
+
+\subsection{Monitoring}
+
+\subsection{Logging}
+
+\subsection{Security}
+There are no security flaws in minitwit.\cite{me}
+
+\subsection{Scaling and upgrading}
+
+\section{Lessons learned perspective}
+
+\subsection{Evolution and refactoring}
+
+\subsection{Operation}
+
+\subsection{Maintenance}
 
 \end{document}
+
+
