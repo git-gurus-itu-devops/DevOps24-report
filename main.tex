@@ -13,7 +13,7 @@
 
 \begin{table}[H]
     \centering
-    \begin{tabular}{c|c}
+    \begin{tabular}{r|l}
     Andreas Guldborg Hansen & aguh@itu \\
     Andreas Severin Hauch Trøstrup & atro@itu.dk \\
     Frederik Petersen & frepe@itu.dk \\
@@ -33,7 +33,7 @@
 An overview of the architecture of our MiniTwit application can be found in figure \ref{fig:architecture}. 
 The entire system runs on DigitalOcean, with the exception of our monitoring and logging that runs on New Relic.
 In DigitalOcean, we have 3 primary nodes running. A swarm manager, and two workers. These 3 nodes are a part of a docker swarm network that runs the minitwit web app and minitwit simulator API containers as docker services.
-The workers and manager also run a New Relic agent that collects logs and system monitoring information, and send it to new relic.
+The workers and manager also run a New Relic agent that collects logs and system monitoring information. This information is then sent to New Relic.
 The manager node runs a Nginx reverse proxy, that handles https encryption, and load balancing between the workers.
 Lastly, in DigitalOcean we also have a managed database running, that acts as the database for the application.
 What the diagram below does not show is that the swarm manager also has a container running the web app and the simulator API. The reason why this is not shown on the diagram is because the Nginx reverse proxy has been set to only forward requests to worker 1 and 2. 
@@ -48,9 +48,9 @@ That means that the web app and the simulator api in the swarm manager will neve
 \end{figure}
 
 \subsection{Dependencies}
-Our application has numerous dependencies, so we have priorities to describe the dependencies that are critical to our application in production. That is, if there is a problem with one of these dependencies, e.g. a dependency has a open security problem, then we have a problem. 
+Our application has numerous dependencies, so we have decided to only describe the dependencies that are critical to our application in production. That is, if there is a problem with one of these dependencies, e.g. a dependency has a open security problem, we have a problem. 
 
-In the dependency graph, available in Figure \ref{fig:dep-prod}, only the direct dependencies in production is shown. There is one exception to this, PostgreSQL is shown as a dependency to DigitalOcean. We decided that it was important to show this dependency as it is a critical dependency for our application.
+In the dependency graph, available in Figure \ref{fig:dep-prod}, only the direct dependencies in production is shown, with one exception -- PostgreSQL is shown as a dependency to DigitalOcean. We decided that it was important to show this dependency as it is a critical dependency for our application.
 Besides from this, we do not show what our dependencies depend on and we do not show the development dependencies. The most important development dependencies can be seen in appendix \ref{appendix: dev-dependecies}.
 
 \begin{figure}[H]
@@ -70,11 +70,9 @@ PostgreSQL is the database management system used for the database. It is hosted
 Ruby is the programming language used to develop the minitwit application.
 New Relic is used for monitoring and logging of the system. It is a push-based monitoring system, and thus each of our VMs runs a New Relic agent that collects and sends logs and monitoring data to New Relic.
 
-Docker is used for containerization of our application, such that it runs so long as our VM has docker installed. The application is run with Docker Swarm, which ensures that the application runs across several machines, and makes load-balancing possible. It also makes it possible to make rolling updates to the application, so updates can be implemented with minimal downtime.
+Docker is used for containerization of our application, such that it runs as long as our VM has docker installed. The application is run with Docker Swarm, which ensures that the application runs across several machines, and makes load-balancing possible. It also makes it possible to make updates to the application with minimal downtime.
 
 Nginx, is a reverse proxy and load balancer we use to expose the minitwit web application. It takes http requests from minitwit.tech, and load balances the request to a worker in the docker swarm. It then takes the reply from the worker and replies the client through https://minitwit.tech with a generated certificate, and thus achieves both load balancing and security in the form of SSL encryption.
-
-
 
 \subsection{Interactions of subsystems}
 
@@ -101,21 +99,19 @@ Similarly, the diagram for the simulator API available in Figure \ref{fig:sequen
 
 
 \subsection{Current state}
-\todo{Describe the current state of your systems, for example using results of static analysis and quality assessments.}
 SonarCloud and CodeClimate has been used for static analysis and quality assessment. 
+The quality gate status on SonarCloud is passed and there are no issues and no security hotspots detected. The duplication of code is 1.7\% which is below the 3\% limit. Code Climate maintainability rating is A, and there is one issue about a function being too long. 
 
-Quality gate status on SonarCloud is passed and there are no issues and no security hotspots detected. The duplication of code is 1.7\& which is below the . It should be mentioned that the test files has been excluded from the static analysis because ... 
+To reduce noise in our static analysis the test files have been excluded from the static analysis to focus on the quality and maintainability in the application code as test files has different coding standards. An example of how 
+the coding standards differ can be seen in the documentation for playwright, our used e2e testing tool. They state that it is okay to have some duplication in your tests especially if it keeps your test clearer and easier to read and maintain \cite{playwright_best_practices}. 
 
 
 \section{Process' perspective}
-\todo{This perspective should clarify how code or other artifacts come from idea into the running system and everything that happens on the way.
-In particular, the following descriptions should be included:}
 The project was developed using GitHub for version control and project management, using the Issues feature to track development tasks.
 
 
 \subsection{CI/CD chain}
-\todo{A complete description of stages and tools included in the CI/CD chains, including deployment and release of your systems. }
-Our CI/CD chain is built using GitHub Actions. We have implemented workflows to automate testing, release and deployment of our code. We also use third-party tools as steps, including Dependabot and SonarCloud for static analysis.
+Our CI/CD chain is built using GitHub Actions. We have implemented workflows to automate testing, release and deployment of our code. We also use third-party tools as steps, including Dependabot, SonarCloud and CodeClimate for static analysis.
 
 \subsubsection{Automatic testing}
 When a pull request is opened on GitHub, the \texttt{automatic-testing} workflow is triggered. This workflow builds a Docker image with the branch code, and runs it as an image using our \texttt{docker-compose} configuration. The workflow then runs the Python-based integration tests against this Docker container, and reports if any tests fail. 
@@ -136,11 +132,10 @@ To ensure our report in our repository is always up to date, we utilise a built-
 \end{enumerate}
 
 \subsection{Monitoring \& Logging}
-\todo{How do you monitor your systems and what precisely do you monitor?}
-Both monitoring and logging of this project is done using New Relic. By installing the new relic agent on our VMs, and the new relic gem in our ruby application we can link it to the web interface. 
-\\From here we can monitor A lot of metrics, but most importantly:
+Both monitoring and logging of this project is done using New Relic. By installing the New Relic agent on our VMs, and the new relic gem in our ruby application we can link it to the web interface. This is done via a push-based monitoring configuration, as all VMs push their data directly to New Relic. 
+\\From the interface we can monitor a lot of metrics, but most importantly:
 \begin{itemize}
-    \item Web transaction time by application layer (See \ref{fig:transaction-times})
+    \item Web transaction time by application layer (See Figure \ref{fig:transaction-times})
     \item Throughput for the application (Requests per minute) 
     \item The slowest transactions, by average response time.
     \item Error rate of transactions
@@ -153,36 +148,82 @@ Additionally we've set new relic up to send us alerts on slack, should the appli
     \label{fig:transaction-times}
 \end{figure}
 
-
-\todo{What do you log in your systems and how do you aggregate logs?}
-% NewRelic er begge dele
+Logs are aggregated automatically by the New Relic agent. The agent picks up log messages from any configured source. By default this includes the \texttt{syslog} and the docker log. In our case we aggregate \texttt{linux\_auth}, \texttt{linux\_syslog} and the \texttt{nginx} logs. The nginx logs shows all request made to the application on any of the VMs.
 
 \subsection{Security}
-\todo{Brief results of the security assessment and brief description of how did you harden the security of your system based on the analysis}
+The results of the security assessment yielded no obvious vulnerabilities, however we have had security in mind while making the application, especially in some aspects of the system. Firstly, we use an ORM to interact with the database in the application. This means that we do not have any explicit SQL statements in the code that can be exploited, and that ActiveRecord handles the security in terms of SQL injection prevention. Secondly, we have implemented HTTPS via. the Nginx reverse proxy. This means that all requests accessed at minitwit.tech are encrypted, and thus protects confidentiality. Lastly, we use a Docker Swarm to host the application, which makes the system more scalable and therefore easier to protect against a Distributed Denial-of-Service attack. We also use dependabot such that we will get notified when any dependency has an update, or has a security vulnerability.
 
 \subsection{Scaling and upgrading}
-\todo{Applied strategy for scaling and upgrades}
 % NB: Vi har skrevet lidt om det her i 2.1.2. Overvej om vi skal rykke noget derfra herned eller hvordan vi klarer det.
+We have used start-first as our upgrade strategy. This corresponds to the blue-green upgrading strategy, where a new node starts before the old one stops. This enables us to perform updates without experiencing any downtime.
+
+
+Horizontal scaling is used as our scaling strategy. This means that whenever an upscale is necessary another node will be added to the docker swarm as a replica of the system. We use Nginx as our load-balancer. This means that our swarm manager, which runs Nginx, becomes a single point of failure. It is always undesired to have single points of failures so if we had more time we would have liked to implement a redundant Load Balancer Setup, though this has not been investigated yet.
+
 
 \subsection{Use of AI tools}
 % \todo{In case you have used AI-assistants during your project briefly explain which system(s) you used during the project and reflect how it supported/hindered your process.}
 
-In the beginning of the project, not all team members were familiar with the programming language Ruby. In order to get familiar, some of us had the Github Copilot extension enabled, allowing us to participate on a similar level as those who were more familiar with the language.\\
+In the beginning of the project, not all team members were familiar with the programming language Ruby. In order to get familiar, some of us had the Github Copilot extension enabled, allowing us to participate on a similar level as those who were more familiar with the language.
+This helped the on the productivity but it might have hindered our learning, as you get the answers served on a plate instead of having to dig for it yourself.\\
 
-In the review process, ChatGPT has been used as a tool to interpret changes made by other members, by prompting ChatGPT to help understand the effects and consequences of the changes.\\
+In the review process, ChatGPT has been used as a tool to interpret changes made by other members, by prompting ChatGPT to help understand the effects and consequences of the changes. This has been a very helpful way to get complicated things explained quickly, and overall we believe that it has helped our learning experience. 
 
 \section{Lessons learned perspective}
-\todo{Describe the biggest issues, how you solved them, and which are major lessons learned with regards to: evolution and refactoring,
-operation, and
-maintenance 
-of your ITU-MiniTwit systems. Link back to respective commit messages, issues, tickets, etc. to illustrate these. Also reflect and describe what was the "DevOps" style of your work. For example, what did you do differently to previous development projects and how did it work?}
+% \todo{Describe the biggest issues, how you solved them, and which are major lessons learned with regards to: evolution and refactoring,
+% operation, and
+% maintenance 
+% of your ITU-MiniTwit systems. Link back to respective commit messages, issues, tickets, etc. to illustrate these. Also reflect and describe what was the "DevOps" style of your work. For example, what did you do differently to previous development projects and how did it work?}
+
+% Paragraph: Evolving & Maintaining database (maybe)
+% discuss what issues we had with migrating to new database. What did we learn from migrating
+% we used NewRelic to identify missing indexes, to improve query speed (maintenance)
+When we started out the project, the database was running as an SQLite database on the machine which also hosted our application. As the project progressed, we decided to migrate to a managed PostgreSQL database, hosted on DigitalOcean. Migrating to this new database was one of the bigger challenges in the project, as multiple problems in the process ended up causing us downtime.
+The biggest issue was in how we transferred the data from SQLite to the new database. We created a simple migration script that read data from SQLite and inserted the corresponding data in PostgreSQL; however, we did not consider the scale of the data we were trying to handle.
+As the migration script was trying to insert entire tables in a single statement, the script ended up crashing due to memory issues.
+We addressed this issue by changing the migration script to perform the insertion in smaller batches -- this made the migration go smoothly, with no performance issues.
+An important learning from this, is to always be careful when handling large amounts of data, as you might otherwise be inadvertently performing a Denial-of-Service against yourself, or worse, a third-party that might block further requests.
+
+Another important learning was in how we identified and fixed issues with scaling our database. As the project went on, our database tables grew, and we started seeing noticeable performance issues on multiple endpoints. Here, our New Relic Application Monitoring proved to be essential in locating and fixing what turned out to be blatant performance issues. Looking at our response time metrics, we saw that one endpoint in particular was getting increasingly slower as our database grew larger. By looking at the query plan on New Relic we noticed the \texttt{DELETE /follower} call was doing a full table scan. Realizing this, we added a multi-column index to (\texttt{who\_id, whom\_id}) in the ``followers'' table. The performance increase of this can be seen on Figure \ref{fig:index_apm}.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{images/index_apm.png}
+    \caption{The APM graph on new relic, before and after adding indexes}
+    \label{fig:index_apm}
+\end{figure}
+\\Similarly, looking at the graph we saw that a considerable amount of time was spent on the \texttt{GET /user} endpoint. Since users are found by querying by the username, we realized this could be fixed with an index on username. The effect of this can be seen on Figure \ref{fig:index_apm}.
+% using a managed product for a database was also a learning and a new way of working in this project (less stuff to manage)
+
+
+
+
+\paragraph{Continous deployment}
+% Name open for change
+% GitOps tool to avoid discrepancies in /remote_files
+% Hot fix to avoid downtime and then fix code smells later (weave in different from other projects with DoDs)
+% (weave in with testing in CI and such)
+When deploying using our deployment pipeline, we would be using some files that are located in \texttt{./remote\_files/}, responsible for pulling the Docker images and starting the Docker swarm. These files are usually uploaded to the manager node using Vagrant or manually \texttt{scp}'ing the files onto the machine. This allows the Github Actions workflow to execute the \texttt{./remote\_files/deploy.sh} script.
+However, since we don't often make changes to these files, we would risk forgetting to upload these files when we would actually make changes and there would be room for error causing unwanted or unexpected behaviour.
+This caused an issue for us, for example when we had to migrate our database\footnote{\href{https://github.com/git-gurus-itu-devops/itu-minitwit/issues/25\#issuecomment-1983695933}{https://github.com/git-gurus-itu-devops/itu-minitwit/issues/25\#issuecomment-1983695933}}. This margin for error could be decreased by using a declarative language to configure our infrastructure such as Ansible\footnote{\href{https://www.ansible.com/}{https://www.ansible.com/}}, or a simpler imperative solution by copying over the files in the deployment workflow.
+% evt. noget om testing i CI men i am not sure hvilken vinkel
+
+
 
 \subsection{Evolution and refactoring}
 
-\subsection{Operation}
 
-\subsection{Maintenance}
-% we used new relic to optimize code, using Apm to find missing indexes and such
+% Our ffirst major downtime came in the form of migrating our SQLITE dartabase to a managed postgersql database. We created a migration script to insert the adat from yhe sqlite db to our postgres db, but this created issues when we ran it. The first issue was the massive amount of data we were trying to insert; we overestimated how much postgres would be able to handle so it died after a while and rolled back the changes. We fixed this by performing the insertions in batches of 1000 instead of trying to perform them all, this allowed to migration to work. The second issue was how regarding primary keys, in that we forgot to also copy the SEQUENCES from the sqlite db, so the new database did not understand how to number the new records, creating duplicate entries. This we fixed by manually restting the sequences to the expected keys. The third issue was in deploying the new deploy script, which we had issues with because Vagrant managed the files on the remote machine. To sync them we would then need to run "vagrant up" but this would also cause downtime. We then manually SCP'ed over the changes.
+% An important lesson here is in how to deploy changes to infrastructure, as we did not have an idempotent way of doing this, resulting in having to manually copy over of restart thedroplet. Being able to sync changes in deploy scripts or infrastructure configurations using a GitOps tool would be ver nice.
+
+
+\subsection{Operation}
+% Når man har mulighed for at bruge noget der er managed så gør det. Hold kæft hvor er det nemt.
+% Hvis kunne have sparet så meget tid på at bruge managed DigitalOcean load balancing (men måske noget med omkostninger, hvem ved - det er ikke mig der betaler)
+
+\newpage
+\printbibliography[
+heading=bibintoc
+]
 
 \newpage
 \section{Appendix}
